@@ -57,18 +57,14 @@ class _ConvBnReLU(nn.Module):
         self.relu_flag = relu
 
     def forward(self, x):
-        x = x['tensor']
-        task = x['task']
+        x,task = x
         h = self.conv(x)
         h = self.bn(h)
         h = self.bn_adapter[task](h)
         if self.relu_flag:
             h = self.relu(h)
-        h = {
-                'tensor':h,
-                'task':task
-            }
-        return h
+
+        return h,task
 
 class _ConvBnReLUwithLRRA(nn.Module):
     def __init__(
@@ -87,19 +83,15 @@ class _ConvBnReLUwithLRRA(nn.Module):
         self.relu_flag = relu
 
     def forward(self, x):
-        task = x['task']
-        x = x['tensor']
+        x,task = x
         h = self.conv(x)
         h = self.adapter[task](x) + h
         h = self.bn(h)
         h = self.bn_adapter[task](h)
         if self.relu_flag:
             h = self.relu(h)
-        h = {
-                'tensor':h,
-                'task':task
-            }
-        return h
+
+        return h,task
 
 # Bottleneck layer cinstructed from ConvBnRelu layer block, buiding block for Res layers
 class _Bottleneck(nn.Module):
@@ -120,18 +112,17 @@ class _Bottleneck(nn.Module):
 
 
     def forward(self, x):
-        task = x['task']
+        _,task = x
         h = self.reduce(x)
         h = self.conv3x3(h)
         h = self.increase(h)
-        h = h + self.shortcut(x) + self.adapter[task](x) 
-        h = h['tensor']
+        x_shortcut,_ = self.shortcut(x)
+        x_adpater = self.adapter[task](x[0])
+        h = h[0] + x_shortcut + x_adpater
+
         h = F.relu(h)
-        h = {
-                'tensor':h,
-                'task':task
-            }
-        return h
+
+        return h,task
 
 # Res Layer used to costruct the encoder
 class _ResLayer(nn.Sequential):
@@ -159,7 +150,7 @@ class _ResLayer(nn.Sequential):
             )
 
 # Stem layer is the initial interfacing layer
-class _Stem(nn.Sequential):
+class _Stem(nn.Module):
     """
     The 1st conv layer.
     Note that the max pooling is different from both MSRA and FAIR ResNet.
@@ -169,6 +160,12 @@ class _Stem(nn.Sequential):
         super(_Stem, self).__init__()
         self.add_module("conv1", _ConvBnReLU(in_ch, out_ch, 7, 2, 3, 1,tasks))
         self.add_module("pool", nn.MaxPool2d(in_ch, 2, 1, ceil_mode=True))
+    def forward(self, x):
+        x,task = x
+        h,_ = self.conv1((x,task))
+        h = self.pool(h)
+
+        return h,task
 
 
 
@@ -179,22 +176,15 @@ class _ImagePool(nn.Module):
         self.conv = _ConvBnReLU(in_ch, out_ch, 1, 1, 0, 1,tasks)
 
     def forward(self, x):
-        _, _, H, W = x.shape
-        x = x['tensor']
-        task = x['task']
+        _, _, H, W = x[0].shape
+        x,task = x
         h = self.pool(x)
-        h = {
-                'tensor':h,
-                'task':task
-        }
-        h = self.conv(h)
-        h = h['tensor']
+        h = (h,task)
+        h,_ = self.conv(h)
+
         h = F.interpolate(h, size=(H, W), mode="bilinear", align_corners=False)
-        h = {
-                'tensor':h,
-                'task':task
-        }
-        return h
+
+        return h,task
 
 
 # Atrous spatial pyramid pooling
@@ -213,12 +203,14 @@ class _ASPP(nn.Module):
         self.stages.add_module("imagepool", _ImagePool(in_ch, out_ch,tasks))
 
     def forward(self, x):
-        tensor = torch.cat([stage(x)['tensor'] for stage in self.stages.children()], dim=1)
-        task = x['task']
-        return {
-                'tensor':tensor,
-                'task':task
-        }
+        _,task = x
+        cat_list = []
+        for stage in self.stages.children():
+            h,_ = stage(x)
+            cat_list.append(h)
+        tensor = torch.cat(cat_list, dim=1)
+
+        return tensor,task
 
 
 
@@ -254,9 +246,9 @@ class _Decoder(nn.Module):
                          nn.ReLU(),
                          nn.Conv2d(64, 1, kernel_size=3, padding=1))
         
-    def forward(self,x,skip_connections):
-        x1, x2, x3, x4, x5 = skip_connections
-        xup5 = self.conv_up5(x)
+    def forward(self,x8,skip_connections):
+        x, x1, x2, x3, x4, x5 = skip_connections
+        xup5 = self.conv_up5(x8)
         xup5 = torch.cat([xup5, x5], dim=1)
         xup4 = self.conv_up4(xup5)
         xup4 = torch.cat([xup4, x4], dim=1)
@@ -313,10 +305,10 @@ class PMNet(nn.Module):
         x7 = self.aspp(x6)
         x8 = self.fc1(x7)
 
-        skip_connections = (x1['tensor'], x2['tensor'], x3['tensor'], x4['tensor'], x5['tensor'])
+        skip_connections = (x[0],x1[0], x2[0], x3[0], x4[0], x5[0])  # 提取 skip connections
 
         # Decoder
-        xup00 = self.decoder[x['task']](x8['tensor'], skip_connections)
+        xup00 = self.decoder[x[1]](x8[0], skip_connections)
         
         return xup00
 

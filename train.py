@@ -13,6 +13,9 @@ def model_out(inputs,model_name,model,task=None):
             'task':task
         }
         outputs = model(inputs_dic)
+    elif model_name == 'LRRA':
+        inputs_dic = (inputs,task)
+        outputs = model(inputs_dic)
     else:
         outputs = model(inputs)
 
@@ -94,7 +97,7 @@ def main():
     # load config
     parser = argparse.ArgumentParser()
     # vanilla.yaml
-    parser.add_argument('--config', type=str, default='configs/vanilla.yaml',help='Path to the config file.')
+    parser.add_argument('--config', type=str, default='configs/lrra.yaml',help='Path to the config file.')
     opts = parser.parse_args()
     config = get_config(opts.config)
 
@@ -145,7 +148,7 @@ def main():
     # train model
     logger.info("Starting training...")
     # task = 'USC'
-    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'])
+    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task='Boston')
 
 if __name__ == "__main__":
     main()

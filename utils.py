@@ -137,6 +137,7 @@ def freeze_model(model,task):
     for name, param in model.named_parameters():
         if task not in name :  # 只冻结不包含 'decoder.USC' 的参数
             param.requires_grad = False
-            print(f"冻结参数: {name}")
+            # print(f"冻结参数: {name}")
         else:
-            print(f"保留参数: {name}")
+            # print(f"保留参数: {name}")
+            pass
