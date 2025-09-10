@@ -1,5 +1,5 @@
 import argparse
-from utils import get_config, setup_logging, create_model,create_folder
+from utils import get_config, setup_logging, create_model,create_folder,load_pretrained_model,freeze_model
 from dataloader import get_loader
 import torch
 from tqdm import tqdm
@@ -18,7 +18,7 @@ def model_out(inputs,model_name,model,task=None):
 
     return outputs
 
-def train_model(model, dataset, dataset_name, training_config, logger,model_name, task=None):
+def train_model(model, dataset, dataset_name, training_config, logger,model_name, last_epoch=None,task=None):
     num_epochs = training_config['num_epochs']
     checkpoint_path = training_config['checkpoint_path']
     # define device
@@ -42,7 +42,13 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
     # 记录开始时间
     start_time = time.time()
     # training loop
-    for epoch in range(num_epochs):
+    if last_epoch is not None:
+        first_epoch = last_epoch-1
+        model.load_state_dict(torch.load(os.path.join(checkpoint_path, f"{dataset_name}_best_model.pth")))
+        best_val_loss = training_config['best_val_loss']
+    else:
+        first_epoch = 0
+    for epoch in range(first_epoch,num_epochs):
         model.train()
         train_loss = 0.0
 
@@ -84,7 +90,6 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
     logger.info("Training completed.")
 
 
-
 def main():
     # load config
     parser = argparse.ArgumentParser()
@@ -122,6 +127,20 @@ def main():
         }
 
     dataset_name = dataset_config['dataset'].split('/')[-2]  # Extract dataset name from path
+
+    if training_config['continue_train']:
+        last_epoch = training_config['last_epoch']
+        train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'], last_epoch=last_epoch)
+        return # Exit after continuing training
+
+    if model_config['model_name'] == 'LRRA':
+        model_path = 'checkpoints/vanilla/USC_best_model.pth'
+        # load the pretrained VANILLA model
+        model = load_pretrained_model(model,model_path)
+
+        freeze_model(model,task='Boston')
+
+
 
     # train model
     logger.info("Starting training...")

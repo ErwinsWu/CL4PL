@@ -8,8 +8,9 @@ dataset:
 
 model:
 # ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
-  model_name: 'VANILLA'
-  save_dir: checkpoints/vanilla/
+  model_name: 'LRRA'
+  save_dir: checkpoints/lrra/
+  tasks: none
   # new_save_dir: checkpoints/DCLPA/
 
 training:
@@ -17,16 +18,19 @@ training:
   lr: 0.0001
   seed: 42
   train_flag: False
+  continue_train: True
+  last_epoch: 15
+  best_val_loss: 0.0334
   # ['MSE', 'KL', 'COS']
   loss: MSE
-  checkpoint_path: checkpoints/vanilla/
+  checkpoint_path: checkpoints/lrra/
 
 logs:
-  train_logger_path: logs/vanilla/
-  test_logger_path: logs/vanilla/
+  train_logger_path: logs/lrra/
+  test_logger_path: logs/lrra/
 
 
 evaluation:
-  model_path: checkpoints/vanilla/
+  model_path: checkpoints/lrra/
 
 

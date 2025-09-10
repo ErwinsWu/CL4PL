@@ -1,0 +1,36 @@
+dataset:
+  dataset_name: RadioMap
+  dataset: dataset/radioMap/USC/
+  batch_size: 32
+  num_workers: 1
+  train_ratio: 0.7
+  test_ratio: 0.2
+
+model:
+# ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
+  model_name: 'VANILLA'
+  save_dir: checkpoints/vanilla/
+  tasks: none
+  # new_save_dir: checkpoints/DCLPA/
+
+training:
+  num_epochs: 120 
+  lr: 0.0001
+  seed: 42
+  train_flag: False
+  continue_train: True
+  last_epoch: 15
+  best_val_loss: 0.0334
+  # ['MSE', 'KL', 'COS']
+  loss: MSE
+  checkpoint_path: checkpoints/vanilla/
+
+logs:
+  train_logger_path: logs/vanilla/
+  test_logger_path: logs/vanilla/
+
+
+evaluation:
+  model_path: checkpoints/vanilla/
+
+
