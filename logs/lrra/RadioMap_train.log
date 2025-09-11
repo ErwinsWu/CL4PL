@@ -49,3 +49,6 @@
 2025-09-10 22:57:10,552 - INFO - Creating model: LRRA
 2025-09-10 22:57:10,789 - INFO - Loading dataset from: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
 2025-09-10 22:57:10,982 - INFO - Starting training...
+2025-09-10 22:58:53,605 - INFO - Creating model: LRRA
+2025-09-10 22:58:53,855 - INFO - Loading dataset from: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
+2025-09-10 22:58:54,049 - INFO - Starting training...

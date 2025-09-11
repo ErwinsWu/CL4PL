@@ -57,6 +57,9 @@ def create_model(model_name,tasks=None,dataset_name=None):
     elif model_name == 'LRRA':
         from model.pmnet_lrra import PMNet
         model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride)
+    elif model_name == 'RCM':
+        from model.pmnet_rcm import PMNet
+        model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
     else:
         raise ValueError(f"未知的模型名称: {model_name}")
 
