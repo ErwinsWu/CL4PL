@@ -227,6 +227,24 @@ def ConRuT(in_channels, out_channels, kernel, padding):
         nn.ReLU(inplace=True)
     )
 
+class _ResidualAttention(nn.Module):
+    def __init__(self, in_ch):
+        super(_ResidualAttention, self).__init__()
+        self.conv1 = nn.Conv2d(in_ch, in_ch//16, 1, 1, 0, 1, bias=False)
+        self.conv2 = nn.Conv2d(in_ch//16, in_ch, 1, 1, 0, 1, bias=False)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+        
+    def forward(self, x):
+        identity = x
+        out = self.conv1(x)
+        out = self.relu(out)
+        out = self.conv2(out)
+        out = self.sigmoid(out)
+        out = out * identity
+        out = out + identity
+        return out
+
 class _Decoder(nn.Module):
     def __init__(self):
         super(_Decoder, self).__init__()
@@ -290,6 +308,7 @@ class PMNet(nn.Module):
         # self.add_module("fc1", _ConvBnReLU(concat_ch, 512, 1, 1, 0, 1))
         self.add_module("fc1", _ConvBnReLUwithLRRA(concat_ch, 512, 1, 1, 0, 1,tasks))
         self.reduce = _ConvBnReLU(256, 256, 1, 1, 0, 1,tasks)
+        self.attention = nn.ModuleDict({task:_ResidualAttention(512) for task in tasks})
 
         # Decoder
         self.decoder = nn.ModuleDict({task: _Decoder() for task in tasks})
@@ -304,6 +323,7 @@ class PMNet(nn.Module):
         x6 = self.layer5(x5)
         x7 = self.aspp(x6)
         x8 = self.fc1(x7)
+        x8 = self.attention[x[1]](x8)
 
         skip_connections = (x[0],x1[0], x2[0], x3[0], x4[0], x5[0])  # 提取 skip connections
 
