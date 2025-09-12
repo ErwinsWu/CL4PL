@@ -1,7 +1,3 @@
-'''
-output_stride=8 (8/H x 8/W)
-'''
-from __future__ import absolute_import, print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
