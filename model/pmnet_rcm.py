@@ -1,14 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# from torchvision import models
-
-# try:
-#     from encoding.nn import SyncBatchNorm
-
-#     _BATCH_NORM = SyncBatchNorm
-# except:
-#     _BATCH_NORM = nn.BatchNorm2d
 
 _BATCH_NORM = nn.BatchNorm2d
 
