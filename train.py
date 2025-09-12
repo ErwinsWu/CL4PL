@@ -16,6 +16,9 @@ def model_out(inputs,model_name,model,task=None):
     elif model_name == 'LRRA':
         inputs_dic = (inputs,task)
         outputs = model(inputs_dic)
+    elif model_name == 'FE':
+        inputs_dic = (inputs,task)
+        outputs = model(inputs_dic)
     else:
         outputs = model(inputs)
 
@@ -47,8 +50,10 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
     # training loop
     if last_epoch is not None:
         first_epoch = last_epoch-1
-        model.load_state_dict(torch.load(os.path.join(checkpoint_path, f"{dataset_name}_best_model.pth")))
-        best_val_loss = training_config['best_val_loss']
+        model_path = training_config['model_path']
+        # model.load_state_dict(model_path)
+        model = load_pretrained_model(model,model_path)
+        best_val_loss = float(training_config['best_val_loss'])
     else:
         first_epoch = 0
     for epoch in range(first_epoch,num_epochs):
@@ -97,7 +102,7 @@ def main():
     # load config
     parser = argparse.ArgumentParser()
     # vanilla.yaml
-    parser.add_argument('--config', type=str, default='configs/lrra.yaml',help='Path to the config file.')
+    parser.add_argument('--config', type=str, default='configs/fe.yaml',help='Path to the config file.')
     opts = parser.parse_args()
     config = get_config(opts.config)
 
@@ -130,16 +135,19 @@ def main():
         }
 
     dataset_name = dataset_config['dataset'].split('/')[-2]  # Extract dataset name from path
+    task = model_config['task']
 
     if training_config['continue_train']:
         last_epoch = training_config['last_epoch']
-        train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'], last_epoch=last_epoch)
+        train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'], last_epoch=last_epoch,task=task)
         return # Exit after continuing training
 
-    if model_config['model_name'] == 'LRRA':
+    if model_config['model_name'] == 'LRRA' or model_config['model_name'] == 'FE':
+        
         model_path = 'checkpoints/vanilla/USC_best_model.pth'
         # load the pretrained VANILLA model
-        model = load_pretrained_model(model,model_path)
+        mapping = 'vanilla2new'
+        model = load_pretrained_model(model,model_path,mapping=mapping)
 
         freeze_model(model,task='Boston')
 
@@ -148,7 +156,7 @@ def main():
     # train model
     logger.info("Starting training...")
     # task = 'USC'
-    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task='Boston')
+    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task)
 
 if __name__ == "__main__":
     main()

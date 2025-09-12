@@ -1,0 +1,36 @@
+dataset:
+  dataset_name: RadioMap
+  dataset: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
+  batch_size: 32
+  num_workers: 1
+  train_ratio: 0.2
+  test_ratio: 0.7
+
+model:
+# ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
+  model_name: 'VANILLA'
+  save_dir: checkpoints/finetuned/
+  tasks: none
+  # new_save_dir: checkpoints/DCLPA/
+
+training:
+  num_epochs: 120 
+  lr: 0.0001
+  seed: 42
+  train_flag: False
+  continue_train: True
+  last_epoch: 1
+  best_val_loss: inf
+  # ['MSE', 'KL', 'COS']
+  loss: MSE
+  checkpoint_path: checkpoints/finetuned/
+
+logs:
+  train_logger_path: logs/finetuned/
+  test_logger_path: logs/finetuned/
+
+
+evaluation:
+  model_path: checkpoints/finetuned/
+
+

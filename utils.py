@@ -60,6 +60,9 @@ def create_model(model_name,tasks=None,dataset_name=None):
     elif model_name == 'RCM':
         from model.pmnet_rcm import PMNet
         model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
+    elif model_name == "FE":
+        from model.pmnet_fe import PMNet
+        model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
     else:
         raise ValueError(f"未知的模型名称: {model_name}")
 
@@ -104,8 +107,8 @@ def encoder_criterion(student_features, teacher_features, eps=1e-8):
     loss = 1 - sim  # [B]
     return loss
 
-def load_pretrained_model(model, model_path,mapping='vanilla_to_lrra'):
-    if mapping == 'vanilla_to_lrra':
+def load_pretrained_model(model, model_path,mapping=None):
+    if mapping == 'vanilla2new':
         old_state_dict = torch.load(model_path, map_location='cpu')
         new_state_dict = model.state_dict()
 
