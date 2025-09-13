@@ -2,6 +2,7 @@ import argparse
 from utils import get_config, setup_logging, create_model,create_folder,load_pretrained_model,freeze_model
 from dataloader import get_loader
 import torch
+import torch.nn as nn
 from tqdm import tqdm
 import os
 import time
@@ -24,7 +25,7 @@ def model_out(inputs,model_name,model,task=None):
 
     return outputs
 
-def train_model(model, dataset, dataset_name, training_config, logger,model_name, last_epoch=None,task=None):
+def train_model(model, dataset, dataset_name, training_config, logger,model_name, last_epoch=None,task=None,ewc=None,lambda_ewc=1000):
     num_epochs = training_config['num_epochs']
     checkpoint_path = training_config['checkpoint_path']
     # define device
@@ -45,8 +46,6 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
 
     best_val_loss = float('inf')
 
-    # 记录开始时间
-    start_time = time.time()
     # training loop
     if last_epoch is not None:
         first_epoch = last_epoch-1
@@ -67,6 +66,8 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
             outputs = model_out(inputs,model_name,model,task)
             # outputs = model(inputs)
             loss = ceriterion(outputs, targets)
+            if ewc is not None :
+                loss += lambda_ewc * ewc.penalty()
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -91,14 +92,10 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
             best_val_loss = val_loss
             create_folder(checkpoint_path)
             torch.save(model.state_dict(), os.path.join(checkpoint_path, f"{dataset_name}_best_model.pth"))
-    # 记录结束时间
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    logger.info(f"Total training time: {elapsed_time/60:.2f} minutes")
-    logger.info("Training completed.")
 
 
 def main():
+    start_time = time.time()
     # load config
     parser = argparse.ArgumentParser()
     # vanilla.yaml
@@ -136,6 +133,26 @@ def main():
 
     dataset_name = dataset_config['dataset'].split('/')[-2]  # Extract dataset name from path
     task = model_config['task']
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    ewc = None
+    if model_config['model_name'] == 'EWC':
+        train_loader, test_loader, val_loader = get_loader(
+        dir_dataset=dataset_config['last_dataset'],
+        batch_size=dataset_config['batch_size'],
+        train_ratio=dataset_config['train_ratio'],
+        test_ratio=dataset_config['test_ratio'],
+        num_workers=dataset_config['num_workers'])
+
+        last_dataset = {
+                'train': train_loader,
+                'test': test_loader,
+                'val': val_loader
+            }
+        from cl_utils import EWC
+        ewc = EWC(model,last_dataset['train'],device,nn.MSELoss())
+        ewc.compute_fisher()
+
+
 
     if training_config['continue_train']:
         last_epoch = training_config['last_epoch']
@@ -156,7 +173,11 @@ def main():
     # train model
     logger.info("Starting training...")
     # task = 'USC'
-    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task)
+    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task,ewc=ewc)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logger.info(f"Total training time: {elapsed_time/60:.2f} minutes")
+    logger.info("Training completed.")
 
 if __name__ == "__main__":
     main()

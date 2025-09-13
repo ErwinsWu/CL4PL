@@ -51,7 +51,7 @@ def create_model(model_name,tasks=None,dataset_name=None):
     atrous_rates = [6, 12, 18]  
     multi_grids = [1, 2, 4]  
     output_stride = 8 
-    if model_name == 'VANILLA':
+    if model_name == 'VANILLA' or model_name == 'EWC':
         from model.pmnet import PMNet
         model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride)
     elif model_name == 'LRRA':
