@@ -51,7 +51,7 @@ def create_model(model_name,tasks=None,dataset_name=None):
     atrous_rates = [6, 12, 18]  
     multi_grids = [1, 2, 4]  
     output_stride = 8 
-    if model_name == 'VANILLA' or model_name == 'EWC':
+    if model_name == 'VANILLA' or model_name == 'EWC' or model_name == 'MAS':
         from model.pmnet import PMNet
         model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride)
     elif model_name == 'LRRA':
@@ -136,6 +136,9 @@ def load_pretrained_model(model, model_path,mapping=None):
         
         # 4. 加载新模型（适配器参数将保持随机初始化）
         model.load_state_dict(new_state_dict, strict=False)
+
+    elif mapping == 'ft':
+        model.load_state_dict(torch.load(model_path))
     
     return model
 

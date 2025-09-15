@@ -18,14 +18,14 @@ def model_out(inputs,model_name,model,task=None):
         inputs_dic = (inputs,task)
         outputs = model(inputs_dic)
     elif model_name == 'FE':
-        inputs_dic = (inputs,task)
-        outputs = model(inputs_dic)
+        # inputs_dic = (inputs,task)
+        outputs = model(inputs,task)
     else:
         outputs = model(inputs)
 
     return outputs
 
-def train_model(model, dataset, dataset_name, training_config, logger,model_name, last_epoch=None,task=None,ewc=None,lambda_ewc=1000):
+def train_model(model, dataset, dataset_name, training_config, logger,model_name, last_epoch=None,task=None,cl=None,lambda_cl=1000):
     num_epochs = training_config['num_epochs']
     checkpoint_path = training_config['checkpoint_path']
     # define device
@@ -66,8 +66,8 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
             outputs = model_out(inputs,model_name,model,task)
             # outputs = model(inputs)
             loss = ceriterion(outputs, targets)
-            if ewc is not None :
-                loss += lambda_ewc * ewc.penalty()
+            if cl is not None :
+                loss += lambda_cl * cl.penalty()
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -99,7 +99,7 @@ def main():
     # load config
     parser = argparse.ArgumentParser()
     # vanilla.yaml
-    parser.add_argument('--config', type=str, default='configs/fe.yaml',help='Path to the config file.')
+    parser.add_argument('--config', type=str, default='configs/mas.yaml',help='Path to the config file.')
     opts = parser.parse_args()
     config = get_config(opts.config)
 
@@ -134,8 +134,9 @@ def main():
     dataset_name = dataset_config['dataset'].split('/')[-2]  # Extract dataset name from path
     task = model_config['task']
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    ewc = None
-    if model_config['model_name'] == 'EWC':
+    cl = None
+    # if model_config['model_name'] == 'EWC':
+    if 'last_dataset' in dataset_config:
         train_loader, test_loader, val_loader = get_loader(
         dir_dataset=dataset_config['last_dataset'],
         batch_size=dataset_config['batch_size'],
@@ -148,10 +149,16 @@ def main():
                 'test': test_loader,
                 'val': val_loader
             }
-        from cl_utils import EWC
-        ewc = EWC(model,last_dataset['train'],device,nn.MSELoss())
-        ewc.compute_fisher()
-
+        model.load_state_dict(torch.load(training_config['model_path']))
+        model.to(device)
+        if model_config['model_name'] == 'EWC':
+            from cl_utils import EWC
+            cl = EWC(model,last_dataset['train'],device,nn.MSELoss())
+            cl.compute_fisher()
+        elif model_config['model_name'] == 'MAS':
+            from cl_utils import MAS
+            cl = MAS(model,last_dataset['train',device,nn.MSELoss()])
+            cl.compute_omega()
 
 
     if training_config['continue_train']:
@@ -173,7 +180,7 @@ def main():
     # train model
     logger.info("Starting training...")
     # task = 'USC'
-    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task,ewc=ewc)
+    train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task,cl=cl)
     end_time = time.time()
     elapsed_time = end_time - start_time
     logger.info(f"Total training time: {elapsed_time/60:.2f} minutes")
