@@ -60,6 +60,12 @@ def create_model(model_name,tasks=None,dataset_name=None):
     elif model_name == 'RCM':
         from model.pmnet_rcm import PMNet
         model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
+    elif model_name == 'PARALLEL':
+        from model.pmnet_parallel import PMNet
+        model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
+    elif model_name == 'SERIES':
+        from model.pmnet_series import PMNet
+        model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
     elif model_name == "FE":
         from model.pmnet_fe import PMNet
         model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
@@ -142,6 +148,44 @@ def load_pretrained_model(model, model_path,mapping=None):
 
     elif mapping == 'ft' or mapping == 'load':
         model.load_state_dict(torch.load(model_path))
+    elif mapping == 'distill':
+        old_state_dict = torch.load(model_path, map_location='cpu')
+        new_state_dict = model.state_dict()
+
+        # 创建映射字典：旧参数名 -> 新参数名
+        mapping_dict = {}
+
+        for key in old_state_dict:
+            if key.startswith('conv_up'):
+                new_key = f'decoder.{key}'
+                if new_key in new_state_dict:
+                    mapping_dict[key] = new_key
+            if key.startswith('layer'):
+                new_key = f'encoder.{key}'
+                if new_key in new_state_dict:
+                    mapping_dict[key] = new_key
+            if key.startswith('aspp'):
+                new_key = f'encoder.{key}'
+                if new_key in new_state_dict:
+                    mapping_dict[key] = new_key
+            if key.startswith('fc1'):
+                new_key = f'encoder.{key}'
+                if new_key in new_state_dict:
+                    mapping_dict[key] = new_key
+            if key.startswith('reduce'):
+                new_key = f'encoder.{key}'
+                if new_key in new_state_dict:
+                    mapping_dict[key] = new_key
+
+        # 3. 加载匹配的参数
+        for old_key, new_key in mapping_dict.items():
+            if old_state_dict[old_key].shape == new_state_dict[new_key].shape:
+                new_state_dict[new_key] = old_state_dict[old_key]
+            else:
+                print(f"形状不匹配: {old_key} -> {new_key}")
+        
+        # 4. 加载新模型（适配器参数将保持随机初始化）
+        model.load_state_dict(new_state_dict, strict=False)
     
     return model
 

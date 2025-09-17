@@ -23,6 +23,8 @@ def model_out(inputs,model_name,model,task=None):
         outputs = model(inputs,task)
     elif model_name == 'DISTILL':
         outputs = model(inputs)
+    elif model_name == 'PARALLEL':
+        outputs = model(inputs,task)
     else:
         outputs = model(inputs)
 
@@ -74,9 +76,10 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
                 stu_encoder_o,x1,x2,x3,x4,x5 = model.encoder(inputs)
                 stu_o = model.decoder(stu_encoder_o,(inputs,x1,x2,x3,x4,x5))
                 loss = (1-lambda_kd) * ceriterion(stu_o,targets) + lambda_kd * encoder_criterion(stu_encoder_o,tea_encoder_o) + lambda_kd * kd_criterion(stu_o,tea_o)
+                loss = loss.mean()
             else:
                 outputs = model_out(inputs,model_name,model,task)
-                # outputs = model(inputs)
+                # outputs = model(inputs) 
                 loss = ceriterion(outputs, targets)
             loss.backward()
             optimizer.step()
@@ -109,7 +112,7 @@ def main():
     # load config
     parser = argparse.ArgumentParser()
     # vanilla.yaml
-    parser.add_argument('--config', type=str, default='configs/distill.yaml',help='Path to the config file.')
+    parser.add_argument('--config', type=str, default='configs/parallel.yaml',help='Path to the config file.')
     opts = parser.parse_args()
     config = get_config(opts.config)
 
@@ -176,7 +179,7 @@ def main():
         train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'], last_epoch=last_epoch,task=task)
         return # Exit after continuing training
 
-    if model_config['model_name'] == 'LRRA' or model_config['model_name'] == 'FE':
+    if model_config['model_name'] == 'LRRA' or model_config['model_name'] == 'FE' or model_config['model_name'] == 'PARALLEL':
         
         model_path = 'checkpoints/vanilla/USC_best_model.pth'
         # load the pretrained VANILLA model
@@ -187,11 +190,11 @@ def main():
 
     if model_config['model_name'] == 'DISTILL':
         last_model_path = model_config['last_model_path']
-        mapping = 'load'
-        stu_model = create_model(model_config['model_name'])
-        stu_model = load_pretrained_model(stu_model,last_model_path,mapping)
+        mapping = 'distill'
+        tea_model = create_model(model_config['model_name'])
+        tea_model = load_pretrained_model(tea_model,last_model_path,mapping)
         logger.info("Start kd training...")
-        train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task,cl=cl,stu_model=stu_model,lambda_kd=model_config['lambda_kd'])
+        train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task,cl=cl,stu_model=tea_model,lambda_kd=model_config['lambda_kd'])
         end_time = time.time()
         elapsed_time = end_time - start_time
         logger.info(f"Total training time: {elapsed_time/60:.2f} minutes")

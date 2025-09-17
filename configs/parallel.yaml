@@ -1,0 +1,37 @@
+dataset:
+  dataset_name: RadioMap
+  dataset: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
+  batch_size: 32
+  num_workers: 1
+  train_ratio: 0.2
+  test_ratio: 0.7
+
+model:
+# ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
+  model_name: 'PARALLEL'
+  save_dir: checkpoints/parallel/
+  tasks: ['USC','Boston','UCLA','SH']
+  task: Boston
+  # new_save_dir: checkpoints/DCLPA/
+
+training:
+  num_epochs: 120 
+  lr: 0.001
+  seed: 42
+  train_flag: False
+  continue_train: False
+  last_epoch: 15
+  best_val_loss: 0.0334
+  # ['MSE', 'KL', 'COS']
+  loss: MSE
+  checkpoint_path: checkpoints/parallel/
+
+logs:
+  train_logger_path: logs/parallel/
+  test_logger_path: logs/parallel/
+
+
+evaluation:
+  model_path: checkpoints/parallel/
+
+
