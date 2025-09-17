@@ -1,6 +1,7 @@
 import argparse
 from utils import get_config, setup_logging, create_model,create_folder,load_pretrained_model,freeze_model
 from dataloader import get_loader
+from utils import kd_criterion,encoder_criterion
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -20,12 +21,14 @@ def model_out(inputs,model_name,model,task=None):
     elif model_name == 'FE':
         # inputs_dic = (inputs,task)
         outputs = model(inputs,task)
+    elif model_name == 'DISTILL':
+        outputs = model(inputs)
     else:
         outputs = model(inputs)
 
     return outputs
 
-def train_model(model, dataset, dataset_name, training_config, logger,model_name, last_epoch=None,task=None,cl=None,lambda_cl=1000):
+def train_model(model, dataset, dataset_name, training_config, logger,model_name,last_epoch=None,task=None,cl=None,lambda_cl=1000,tea_model=None,lambda_kd=0.5):
     num_epochs = training_config['num_epochs']
     checkpoint_path = training_config['checkpoint_path']
     # define device
@@ -63,11 +66,18 @@ def train_model(model, dataset, dataset_name, training_config, logger,model_name
             inputs = inputs.to(device)
             targets = targets.to(device)
             optimizer.zero_grad()
-            outputs = model_out(inputs,model_name,model,task)
-            # outputs = model(inputs)
-            loss = ceriterion(outputs, targets)
             if cl is not None :
                 loss += lambda_cl * cl.penalty()
+            if tea_model is not None:
+                tea_encoder_o,x1,x2,x3,x4,x5 = tea_model.encoder(inputs)
+                tea_o = tea_model.decoder(tea_encoder_o,(inputs,x1,x2,x3,x4,x5))
+                stu_encoder_o,x1,x2,x3,x4,x5 = model.encoder(inputs)
+                stu_o = model.decoder(stu_encoder_o,(inputs,x1,x2,x3,x4,x5))
+                loss = (1-lambda_kd) * ceriterion(stu_o,targets) + lambda_kd * encoder_criterion(stu_encoder_o,tea_encoder_o) + lambda_kd * kd_criterion(stu_o,tea_o)
+            else:
+                outputs = model_out(inputs,model_name,model,task)
+                # outputs = model(inputs)
+                loss = ceriterion(outputs, targets)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -99,7 +109,7 @@ def main():
     # load config
     parser = argparse.ArgumentParser()
     # vanilla.yaml
-    parser.add_argument('--config', type=str, default='configs/mas.yaml',help='Path to the config file.')
+    parser.add_argument('--config', type=str, default='configs/distill.yaml',help='Path to the config file.')
     opts = parser.parse_args()
     config = get_config(opts.config)
 
@@ -175,7 +185,18 @@ def main():
 
         freeze_model(model,task='Boston')
 
-
+    if model_config['model_name'] == 'DISTILL':
+        last_model_path = model_config['last_model_path']
+        mapping = 'load'
+        stu_model = create_model(model_config['model_name'])
+        stu_model = load_pretrained_model(stu_model,last_model_path,mapping)
+        logger.info("Start kd training...")
+        train_model(model, dataset, dataset_name, training_config, logger,model_config['model_name'],task=task,cl=cl,stu_model=stu_model,lambda_kd=model_config['lambda_kd'])
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        logger.info(f"Total training time: {elapsed_time/60:.2f} minutes")
+        logger.info("Training completed.")
+        return
 
     # train model
     logger.info("Starting training...")

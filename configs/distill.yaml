@@ -1,0 +1,39 @@
+dataset:
+  dataset_name: RadioMap
+  dataset: dataset/radioMap/USC/
+  batch_size: 32
+  num_workers: 1
+  train_ratio: 0.7
+  test_ratio: 0.2
+
+model:
+# ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
+  model_name: 'DISTILL'
+  save_dir: checkpoints/distill/
+  last_model_path: checkpoints/vanilla/USC_best_model.pth
+  lambda_kd: 0.5
+  tasks: none
+  task: none
+  # new_save_dir: checkpoints/DCLPA/
+
+training:
+  num_epochs: 120 
+  lr: 0.0001
+  seed: 42
+  train_flag: False
+  continue_train: False
+  last_epoch: 1
+  best_val_loss: 0.0334
+  # ['MSE', 'KL', 'COS']
+  loss: MSE
+  checkpoint_path: checkpoints/distill/
+
+logs:
+  train_logger_path: logs/distill/
+  test_logger_path: logs/distill/
+
+
+evaluation:
+  model_path: checkpoints/distill/
+
+

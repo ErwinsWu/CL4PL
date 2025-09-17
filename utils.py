@@ -63,6 +63,9 @@ def create_model(model_name,tasks=None,dataset_name=None):
     elif model_name == "FE":
         from model.pmnet_fe import PMNet
         model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride,tasks)
+    elif model_name == 'DISTILL':
+        from model.pmnet_distill import PMNet
+        model = PMNet(n_blocks, atrous_rates, multi_grids, output_stride)
     else:
         raise ValueError(f"未知的模型名称: {model_name}")
 
@@ -137,7 +140,7 @@ def load_pretrained_model(model, model_path,mapping=None):
         # 4. 加载新模型（适配器参数将保持随机初始化）
         model.load_state_dict(new_state_dict, strict=False)
 
-    elif mapping == 'ft':
+    elif mapping == 'ft' or mapping == 'load':
         model.load_state_dict(torch.load(model_path))
     
     return model
