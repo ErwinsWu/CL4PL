@@ -1,6 +1,6 @@
 dataset:
   dataset_name: RadioMap
-  dataset: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
+  dataset: D:/Jimmy/Dataset/radioMap_include_SH/radioMap/USC/
   last_dataset: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/USC/
   batch_size: 32
   num_workers: 1
@@ -12,7 +12,7 @@ model:
   model_name: 'EWC'
   save_dir: checkpoints/ewc/
   tasks: ['USC','Boston','UCLA','SH']
-  task: Boston
+  task: UCLA
   # new_save_dir: checkpoints/DCLPA/
 
 training:

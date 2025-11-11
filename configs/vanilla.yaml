@@ -1,6 +1,7 @@
 dataset:
   dataset_name: RadioMap
-  dataset: dataset/radioMap/USC/
+  dataset: ../radioMap/UCLA_crop/
+  dataset_list: ['../radioMap/USC/','../radioMap/Boston/']
   batch_size: 32
   num_workers: 1
   train_ratio: 0.7

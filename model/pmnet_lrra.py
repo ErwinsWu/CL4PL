@@ -29,7 +29,7 @@ class BNResidualAdapter(nn.Module):
     def __init__(self, num_features):
         super().__init__()
         # 小型残差 affine
-        self.gamma_r = nn.Parameter(torch.ones(num_features) * 0.0)
+        self.gamma_r = nn.Parameter(torch.zeros(num_features))
         self.beta_r  = nn.Parameter(torch.zeros(num_features))
         
     def forward(self, x):
@@ -105,6 +105,7 @@ class _Bottleneck(nn.Module):
         )
         # self.adapter = _LRRA(mid_ch, mid_ch, rank=16, alpha=16,stride=stride)
         self.adapter = nn.ModuleDict({task: _LRRA(in_ch, out_ch, rank=16, alpha=16,stride=stride) for task in tasks})
+
 
 
     def forward(self, x):
@@ -227,19 +228,25 @@ class _ResidualAttention(nn.Module):
     def __init__(self, in_ch):
         super(_ResidualAttention, self).__init__()
         self.conv1 = nn.Conv2d(in_ch, in_ch//16, 1, 1, 0, 1, bias=False)
-        self.conv2 = nn.Conv2d(in_ch//16, in_ch, 1, 1, 0, 1, bias=False)
+        self.conv2 = nn.Conv2d(in_ch//16, in_ch, 1, 1, 0, 1, bias=True)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
+
+        nn.init.kaiming_uniform_(self.conv1.weight,a=1)
+        nn.init.constant_(self.conv2.weight,0.0)
+
+        nn.init.constant_(self.conv2.bias, -10.0)
+
         
     def forward(self, x):
-        identity = x
-        out = self.conv1(x)
+        identity,task = x
+        out = self.conv1(x[0])
         out = self.relu(out)
         out = self.conv2(out)
         out = self.sigmoid(out)
         out = out * identity
         out = out + identity
-        return out
+        return out,task
 
 class _Decoder(nn.Module):
     def __init__(self):

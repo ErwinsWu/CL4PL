@@ -1,16 +1,17 @@
 dataset:
   dataset_name: RadioMap
-  dataset: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
+  dataset: /root/autodl-tmp/radioMap/Boston/
   batch_size: 32
   num_workers: 1
-  train_ratio: 0.2
-  test_ratio: 0.7
+  train_ratio: 0.7
+  test_ratio: 0.2
 
 model:
 # ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
-  model_name: 'VANILLA'
+  model_name: 'FT'
   save_dir: checkpoints/finetuned/
   tasks: none
+  father_model_path: checkpoints/vanilla/USC_best_model.pth
   # new_save_dir: checkpoints/DCLPA/
 
 training:

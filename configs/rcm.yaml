@@ -1,21 +1,22 @@
 dataset:
   dataset_name: RadioMap
-  dataset: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
-  batch_size: 32
+  dataset: /Users/erwinswu/radioMap/Boston/
+  batch_size: 8
   num_workers: 1
-  train_ratio: 0.2
-  test_ratio: 0.7
+  train_ratio: 0.7
+  test_ratio: 0.2
 
 model:
 # ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
-  model_name: 'LRRA'
+  model_name: 'RCM'
   save_dir: checkpoints/rcm/
   tasks: ['USC','Boston','UCLA','SH']
+  task: Boston
   # new_save_dir: checkpoints/DCLPA/
 
 training:
   num_epochs: 120 
-  lr: 0.001
+  lr: 0.0001
   seed: 42
   train_flag: False
   continue_train: False

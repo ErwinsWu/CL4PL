@@ -1,16 +1,17 @@
 dataset:
   dataset_name: RadioMap
-  dataset: D:/Jimmy/pythonProjects/CL4PL_linux/dataset/radioMap/Boston/
+  dataset: ../radioMap/Boston/
   batch_size: 32
   num_workers: 1
-  train_ratio: 0.7
-  test_ratio: 0.2
+  train_ratio: 0.2
+  test_ratio: 0.7
 
 model:
 # ['DCLPA', 'EWC', 'MAS', 'LWF', 'ILT', 'RCM', 'MDIL', 'VANILLA', 'DEFORMABLE']
   model_name: 'LRRA'
   save_dir: checkpoints/lrra/
-  tasks: none
+  tasks: ['USC','Boston','UCLA','SH']
+  task: Boston
   # new_save_dir: checkpoints/DCLPA/
 
 training:

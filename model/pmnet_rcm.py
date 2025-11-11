@@ -133,8 +133,8 @@ class _ASPP(nn.Module):
         _,task = x
         cat_list = []
         for stage in self.stages.children():
-            x,_ = stage(x)
-            cat_list.append(x)
+            o_x,_ = stage(x)
+            cat_list.append(o_x)
         return torch.cat(cat_list, dim=1),task
 
 

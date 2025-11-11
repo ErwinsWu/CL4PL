@@ -24,6 +24,7 @@ class _ConvBnReLU(nn.Module):
             self.add_module("relu", nn.ReLU())
 
     def forward(self, x):
+        # print(x[-1])
         x,task = x
         h = self.Ws(x)
         h = h + self.Wt[task](x)
@@ -135,8 +136,8 @@ class _ASPP(nn.Module):
         _,task = x
         cat_list = []
         for stage in self.stages.children():
-            x,_ = stage(x)
-            cat_list.append(x)
+            s_x,_ = stage(x)
+            cat_list.append(s_x)
         return torch.cat(cat_list, dim=1),task
 
 
