@@ -1,15 +1,4 @@
-# Hold on to What You've Got: Preventing Knowledge Decay in Path Loss Map Prediction
 
-<!-- 在这里放一些徽章 (Badges)，非常专业。可以从 shields.io 生成 -->
-<!-- 例如: Paper, Code License, Python Version -->
-<!-- <p align="center">
-  <a href="[你的论文PDF链接，例如arXiv链接]">
-    <img src="https://img.shields.io/badge/Paper-arXiv-red?style=flat-square" alt="Paper">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License">
-  </a>
-  <img src="https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square" alt="Python">
 </p>
 
 Official PyTorch implementation for the paper: **"[Your Paper Title]"**.
