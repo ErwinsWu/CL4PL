@@ -33,8 +33,7 @@ Official PyTorch implementation for the paper: **"[Your Paper Title]"**.
 
 
 ## ✨ Main Contributions
-*   To the best of our knowledge, this is the first work to introduce continual learning to the domain of path loss prediction to address model adaptability and catastrophic forgetting.
-
+*   To the best of our knowledge, this is the first work to introduce continual learning to the domain of path loss map prediction to address model adaptability and catastrophic forgetting.
 *   We propose a continual learning framework based on a dynamic architectural approach, which integrates novel task-specific modules (STAM, RAMM) into a multi-decoder structure. This allows the model to expand its capacity for new tasks, enabling rapid adaptation while preserving shared knowledge.
 *   We provide a comprehensive empirical evaluation on multiple urban datasets, establishing a new benchmark and demonstrating our method's superior performance in mitigating forgetting, enabling knowledge transfer, and balancing accuracy with efficiency.
 
